@@ -178,6 +178,42 @@
       line-height: 1.4;
     }
 
+    .refresh-controls {
+      margin-top: 14px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .refresh-controls label {
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .refresh-select {
+      background: #0b1220;
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 6px 8px;
+    }
+
+    .refresh-toggle {
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: #0b1220;
+      color: var(--text);
+      padding: 7px 10px;
+      cursor: pointer;
+      font-size: 13px;
+    }
+
     @media (max-width: 520px) {
       .actions {
         grid-template-columns: 1fr;
@@ -233,6 +269,16 @@
     <span id="paro-value" style="display:none">:="Paro":</span>
     <span id="termico-value" style="display:none">:="Termico":</span>
 
+    <div class="refresh-controls">
+      <label for="refresh-interval">Refresco</label>
+      <select id="refresh-interval" class="refresh-select">
+        <option value="500">500 ms</option>
+        <option value="1000" selected>1 s</option>
+        <option value="2000">2 s</option>
+      </select>
+      <button type="button" id="refresh-toggle" class="refresh-toggle">Pausar</button>
+    </div>
+
     <p class="help">
       Botones compatibles con OB1: escribe <b>Marcha</b>, <b>Paro</b> y <b>Termico</b>.
     </p>
@@ -243,6 +289,8 @@
       var motorElement = document.getElementById("motor-value");
       var redLight = document.getElementById("light-red");
       var greenLight = document.getElementById("light-green");
+      var refreshSelect = document.getElementById("refresh-interval");
+      var refreshToggle = document.getElementById("refresh-toggle");
 
       if (!motorElement || !redLight || !greenLight) {
         return;
@@ -296,6 +344,41 @@
       paintButtonState("marcha-value", "btn-marcha-on", "btn-marcha-off");
       paintButtonState("paro-value", "btn-paro-on", "btn-paro-off");
       paintButtonState("termico-value", "btn-termico-on", "btn-termico-off");
+
+      if (!refreshSelect || !refreshToggle) {
+        return;
+      }
+
+      var KEY_ENABLED = "awpRefreshEnabled";
+      var KEY_INTERVAL = "awpRefreshInterval";
+      var enabledStored = sessionStorage.getItem(KEY_ENABLED);
+      var intervalStored = sessionStorage.getItem(KEY_INTERVAL);
+      var refreshEnabled = enabledStored !== "0";
+      var refreshInterval = parseInt(intervalStored || "1000", 10);
+
+      if (refreshInterval !== 500 && refreshInterval !== 1000 && refreshInterval !== 2000) {
+        refreshInterval = 1000;
+      }
+
+      refreshSelect.value = String(refreshInterval);
+      refreshToggle.textContent = refreshEnabled ? "Pausar" : "Reanudar";
+
+      refreshSelect.addEventListener("change", function () {
+        refreshInterval = parseInt(refreshSelect.value, 10);
+        sessionStorage.setItem(KEY_INTERVAL, String(refreshInterval));
+      });
+
+      refreshToggle.addEventListener("click", function () {
+        refreshEnabled = !refreshEnabled;
+        sessionStorage.setItem(KEY_ENABLED, refreshEnabled ? "1" : "0");
+        refreshToggle.textContent = refreshEnabled ? "Pausar" : "Reanudar";
+      });
+
+      setTimeout(function () {
+        if (refreshEnabled) {
+          window.location.reload();
+        }
+      }, refreshInterval);
     })();
   </script>
 </body>
