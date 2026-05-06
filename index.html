@@ -131,6 +131,18 @@
       transition: transform 0.08s ease, filter 0.15s ease;
     }
 
+    .btn-live {
+      opacity: 1;
+      filter: saturate(1.15) brightness(1.05);
+      box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.22), 0 10px 20px rgba(0, 0, 0, 0.25);
+    }
+
+    .btn-dim {
+      opacity: 0.45;
+      filter: saturate(0.7) brightness(0.8);
+      box-shadow: none;
+    }
+
     .btn:active {
       transform: scale(0.99);
     }
@@ -189,34 +201,37 @@
     <div class="actions">
       <form method="post">
         <input type="hidden" name='"Marcha"' value="1">
-        <input class="btn btn-start" type="submit" value="Marcha ON">
+        <input class="btn btn-start" id="btn-marcha-on" type="submit" value="Marcha ON">
       </form>
 
       <form method="post">
         <input type="hidden" name='"Marcha"' value="0">
-        <input class="btn btn-stop" type="submit" value="Marcha OFF">
+        <input class="btn btn-stop" id="btn-marcha-off" type="submit" value="Marcha OFF">
       </form>
 
       <form method="post">
         <input type="hidden" name='"Paro"' value="1">
-        <input class="btn btn-stop" type="submit" value="Paro ON">
+        <input class="btn btn-stop" id="btn-paro-on" type="submit" value="Paro ON">
       </form>
 
       <form method="post">
         <input type="hidden" name='"Paro"' value="0">
-        <input class="btn btn-neutral" type="submit" value="Paro OFF">
+        <input class="btn btn-neutral" id="btn-paro-off" type="submit" value="Paro OFF">
       </form>
 
       <form method="post">
         <input type="hidden" name='"Termico"' value="1">
-        <input class="btn btn-neutral" type="submit" value="Termico ON">
+        <input class="btn btn-neutral" id="btn-termico-on" type="submit" value="Termico ON">
       </form>
 
       <form method="post">
         <input type="hidden" name='"Termico"' value="0">
-        <input class="btn btn-stop" type="submit" value="Termico OFF">
+        <input class="btn btn-stop" id="btn-termico-off" type="submit" value="Termico OFF">
       </form>
     </div>
+    <span id="marcha-value" style="display:none">:="Marcha":</span>
+    <span id="paro-value" style="display:none">:="Paro":</span>
+    <span id="termico-value" style="display:none">:="Termico":</span>
 
     <p class="help">
       Botones compatibles con OB1: escribe <b>Marcha</b>, <b>Paro</b> y <b>Termico</b>.
@@ -233,17 +248,54 @@
         return;
       }
 
-      var raw = motorElement.textContent || "";
-      var normalized = raw.replace(/\s+/g, "").toLowerCase();
-      var isOn = normalized === "1" || normalized === "true";
-
-      if (isOn) {
-        greenLight.classList.add("active");
-        redLight.classList.remove("active");
-      } else {
-        redLight.classList.add("active");
-        greenLight.classList.remove("active");
+      function isSignalOn(rawValue) {
+        var normalized = (rawValue || "").replace(/\s+/g, "").toLowerCase();
+        return normalized === "1" || normalized === "true";
       }
+
+      function paintTrafficLights(valueElementId, redId, greenId) {
+        var valueElement = document.getElementById(valueElementId);
+        var redElement = document.getElementById(redId);
+        var greenElement = document.getElementById(greenId);
+
+        if (!valueElement || !redElement || !greenElement) {
+          return;
+        }
+
+        var isOn = isSignalOn(valueElement.textContent);
+
+        if (isOn) {
+          greenElement.classList.add("active");
+          redElement.classList.remove("active");
+        } else {
+          redElement.classList.add("active");
+          greenElement.classList.remove("active");
+        }
+      }
+
+      function paintButtonState(valueElementId, onButtonId, offButtonId) {
+        var valueElement = document.getElementById(valueElementId);
+        var onButton = document.getElementById(onButtonId);
+        var offButton = document.getElementById(offButtonId);
+
+        if (!valueElement || !onButton || !offButton) {
+          return;
+        }
+
+        var isOn = isSignalOn(valueElement.textContent);
+        var activeButton = isOn ? onButton : offButton;
+        var inactiveButton = isOn ? offButton : onButton;
+
+        activeButton.classList.add("btn-live");
+        activeButton.classList.remove("btn-dim");
+        inactiveButton.classList.add("btn-dim");
+        inactiveButton.classList.remove("btn-live");
+      }
+
+      paintTrafficLights("motor-value", "light-red", "light-green");
+      paintButtonState("marcha-value", "btn-marcha-on", "btn-marcha-off");
+      paintButtonState("paro-value", "btn-paro-on", "btn-paro-off");
+      paintButtonState("termico-value", "btn-termico-on", "btn-termico-off");
     })();
   </script>
 </body>
